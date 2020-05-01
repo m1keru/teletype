@@ -1,0 +1,14 @@
+[Unit]
+Description=Teletype Bot
+After=network.target remote-fs.target nss-lookup.target nginx.target mongod.target
+[Service]
+WorkingDirectory=/etc/teletype
+ExecStart=/usr/local/bin/teletype --config /etc/teletype/config.yaml
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=teletype
+User=root
+Environment=
+[Install]
+WantedBy=multi-user.target
+

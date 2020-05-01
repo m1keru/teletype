@@ -29,7 +29,15 @@ default: all
 
 # non-phony targets
 $(TARGET): $(OBJ)
-	cd cmd/teletype &&	$(CC) build -o ../../dist/teletype 
+	cd cmd/$(TARGET_NAME) && \
+	$(CC) build -o ../../dist/$(TARGET_NAME) && \
+	cd - && \
+	cp config/config.yaml.tpl dist/ && \
+	cp build/install.sh dist/ && \
+	cp init/teletype.service dist/ && \
+	tar -zcf dist.tgz dist && \
+	mv dist.tgz dist
+	
 
 # phony rules
 .PHONY: all
