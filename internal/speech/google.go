@@ -2,10 +2,12 @@ package speech
 
 import (
 	"context"
-	"github.com/m1keru/teletype/internal/config"
-	log "github.com/sirupsen/logrus"
+	"errors"
 	"os"
 	"sync"
+
+	"github.com/m1keru/teletype/internal/config"
+	log "github.com/sirupsen/logrus"
 
 	speech "cloud.google.com/go/speech/apiv1"
 	speechpb "google.golang.org/genproto/googleapis/cloud/speech/v1"
@@ -41,6 +43,7 @@ func recognise(client *speech.Client, data []byte, textChannel *chan string) err
 	var transcript string
 	if len(resp.Results) == 0 {
 		*textChannel <- "Хер его знает че он там пизданул.\n"
+		return errors.New("No results gathered from API")
 	}
 
 	for _, result := range resp.Results {
@@ -63,6 +66,9 @@ func Run(cfg *config.Config, wg *sync.WaitGroup, voiceChannel *chan []byte, text
 	configEnv(cfg)
 	ctx := context.Background()
 	client, err := speech.NewClient(ctx)
+	if cfg.Daemon.Debug {
+		log.SetLevel(log.DebugLevel)
+	}
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
