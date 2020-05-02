@@ -1,6 +1,7 @@
 ---
 Daemon:
   LogFile:
+  Debug: true
 Speech:
   SampleRateHertz: 8000
   LanguageCode: ru-RU

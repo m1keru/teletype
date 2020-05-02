@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -24,6 +24,7 @@ type Speech struct {
 //Daemon - DaemonConfig
 type Daemon struct {
 	LogFile string `yaml:"LogFile"`
+	Debug   bool   `yaml:"Debug"`
 }
 
 //Config - Config
