@@ -2,6 +2,7 @@ package speech
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"os"
 	"sync"
@@ -13,13 +14,29 @@ import (
 	speechpb "google.golang.org/genproto/googleapis/cloud/speech/v1"
 )
 
+//DetectRate - DetectRate
+func DetectRate(file *[]byte) (uint32, error) {
+	if len(*file) < 40 {
+		return 0, errors.New("No data in downloaded from Telegram audio")
+	}
+	rate := (*file)[40:42]
+	rate = append(rate, byte(0), byte(0))
+	data := binary.LittleEndian.Uint32(rate)
+	log.Printf("BITRATE: %d", data)
+	return data, nil
+}
+
 func recognise(client *speech.Client, data []byte, textChannel *chan string) error {
 	ctx := context.Background()
 
+	bitRate, err := DetectRate(&data)
+	if err != nil {
+		log.Errorf("Cloud not detect bitrate: %v", err)
+	}
 	req := &speechpb.LongRunningRecognizeRequest{
 		Config: &speechpb.RecognitionConfig{
 			Encoding:        speechpb.RecognitionConfig_OGG_OPUS,
-			SampleRateHertz: 48000,
+			SampleRateHertz: int32(bitRate),
 			LanguageCode:    "ru-Ru",
 		},
 		Audio: &speechpb.RecognitionAudio{

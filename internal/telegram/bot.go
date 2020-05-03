@@ -2,7 +2,10 @@ package telegram
 
 import (
 	"bytes"
-	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"encoding/binary"
+	//"encoding/hex"
+	"errors"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/m1keru/teletype/internal/config"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -10,7 +13,8 @@ import (
 	"sync"
 )
 
-func downloadURL(url string) ([]byte, error) {
+//DownloadURL - DownloadURL
+func DownloadURL(url string) ([]byte, error) {
 	log.Println("downloadURL:", url)
 	fileBuffer := new(bytes.Buffer)
 	resp, err := http.Get(url)
@@ -22,6 +26,18 @@ func downloadURL(url string) ([]byte, error) {
 	io.Copy(fileBuffer, resp.Body)
 	log.Debugf("%s downloaded successfull", url)
 	return fileBuffer.Bytes(), nil
+}
+
+//DetectRate - DetectRate
+func DetectRate(file *[]byte) (uint32, error) {
+	if len(*file) < 40 {
+		return 0, errors.New("No data in downloaded from Telegram audio")
+	}
+	rate := (*file)[40:42]
+	rate = append(rate, byte(0), byte(0))
+	data := binary.LittleEndian.Uint32(rate)
+	log.Printf("BITRATE: %d", data)
+	return data, nil
 }
 
 //Run - run
@@ -51,10 +67,12 @@ func Run(cfg *config.Config, wg *sync.WaitGroup, voiceChannel *chan []byte, text
 				log.Errorf("Error: %+v", err)
 			}
 			log.Println(url)
-			voice, err := downloadURL(url)
+			voice, err := DownloadURL(url)
 			if err != nil {
 				log.Errorf("Error: %+v", err)
 			}
+			rate, _ := DetectRate(&voice)
+			log.Debugf("HZ: %d", rate)
 			*voiceChannel <- voice
 			transcript := <-*textChannel
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, transcript)
